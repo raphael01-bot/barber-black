@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Black Lion Barber Shop - Menú y Citas</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Socket.IO Client para Sincronización Realtime en Render -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      background-color: #09090b;
+      color: #f4f4f5;
+    }
+
+    .font-cinzel { font-family: 'Cinzel', serif; }
+
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #FDF0A6 0%, #D4AF37 45%, #AA771C 80%, #F5D77F 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gold-gradient-bg {
+      background: linear-gradient(135deg, #FDF0A6 0%, #D4AF37 50%, #996515 100%);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #18181b; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen pb-36 selection:bg-amber-400 selection:text-zinc-950">
+
+  <!-- ENCABEZADO Y BRANDING -->
+  <header class="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur-md border-b border-amber-500/30 shadow-2xl">
+    <div class="max-w-md mx-auto px-4 py-3.5 flex items-center justify-between">
+      
+      <!-- LOGO Y TITULO -->
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 rounded-2xl bg-zinc-900 border border-amber-400/80 flex items-center justify-center shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-scissors text-amber-400 text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-cinzel text-base font-extrabold tracking-wider gold-gradient-text uppercase leading-none">
+            THE BLACK LION
+          </h1>
+          <p class="text-[10px] text-zinc-400 font-semibold tracking-widest uppercase mt-1">
+            BARBER SHOP • CDMX
+          </p>
+        </div>
+      </div>
+
+      <!-- BADGE DE BEBIDA DE CORTESÍA -->
+      <div class="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1.5">
+        <i class="fa-solid fa-martini-glass-citrus text-xs"></i>
+        <span>Bebida Gratis</span>
+      </div>
+
+    </div>
+
+    <!-- HORARIOS Y UBICACIÓN -->
+    <div class="max-w-md mx-auto px-4 py-1.5 border-t border-zinc-900 flex items-center justify-between text-[11px] text-zinc-400 bg-zinc-950/60">
+      <div class="flex items-center gap-1.5 text-zinc-300">
+        <i class="fa-solid fa-location-dot text-amber-400"></i>
+        <span class="truncate">Av. Océano de las Tempestades Mz. 44 Lt. 5</span>
+      </div>
+      <div class="flex items-center gap-1 text-amber-400 font-semibold flex-shrink-0">
+        <i class="fa-solid fa-clock"></i>
+        <span>12 PM - 9 PM</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-md mx-auto px-4 pt-4 space-y-6">
+
+    <!-- LEYENDA INDICATIVA DESTACADA -->
+    <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl p-3.5 text-center shadow-xl bg-gradient-to-r from-zinc-900 via-amber-950/20 to-zinc-900">
+      <p class="text-xs font-bold text-amber-300 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-scissors text-amber-400"></i>
+        <span>Reserva tu cita fácilmente en línea y confirma por WhatsApp.</span>
+      </p>
+    </div>
+
+    <!-- SECCIÓN DE CORTESÍA DESTACADA -->
+    <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 border border-amber-500/40 rounded-2xl p-3.5 flex items-center gap-3 shadow-xl">
+      <div class="w-10 h-10 rounded-xl gold-gradient-bg flex items-center justify-center text-zinc-950 text-lg font-black flex-shrink-0">
+        <i class="fa-solid fa-whiskey-glass"></i>
+      </div>
+      <div>
+        <h3 class="font-bold text-xs text-amber-400 uppercase tracking-wide">Cortesía de la Casa</h3>
+        <p class="text-[11px] text-zinc-300 leading-tight">Todos nuestros servicios incluyen bebidas de cortesía durante tu estancia.</p>
+      </div>
+    </div>
+
+    <!-- PESTAÑAS: SERVICIOS / PAQUETES -->
+    <div class="flex bg-zinc-900/90 p-1 rounded-2xl border border-zinc-800 text-xs font-bold">
+      <button onclick="switchTab('servicios')" id="tabServicios" class="flex-1 py-2 rounded-xl text-zinc-950 gold-gradient-bg shadow-md transition-all">
+        ✂️ Servicios Individuales
+      </button>
+      <button onclick="switchTab('paquetes')" id="tabPaquetes" class="flex-1 py-2 rounded-xl text-zinc-400 hover:text-white transition-all">
+        👑 Paquetes Especiales
+      </button>
+    </div>
+
+    <!-- CATÁLOGO DE SERVICIOS INDIVIDUALES -->
+    <section id="secServicios" class="space-y-3">
+      <!-- Se inserta mediante Javascript -->
+    </section>
+
+    <!-- CATÁLOGO DE PAQUETES ESPECIALES -->
+    <section id="secPaquetes" class="hidden space-y-3">
+      <!-- Se inserta mediante Javascript -->
+    </section>
+
+    <!-- SECCIÓN DE AGENDADO DE CITAS -->
+    <section class="bg-zinc-900 border border-amber-500/30 rounded-3xl p-4 shadow-2xl space-y-4">
+      <div class="border-b border-zinc-800 pb-3 flex justify-between items-start">
+        <div>
+          <h2 class="font-cinzel text-base font-bold text-amber-400 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-amber-400"></i>
+            Agendar Cita en Línea
+          </h2>
+          <p class="text-xs text-zinc-400 mt-0.5">Elige el día y la hora disponible que mejor te acomode.</p>
+        </div>
+        <div id="syncBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span id="syncText">Conectado a Render</span>
+        </div>
+      </div>
+
+      <!-- SELECCIÓN DE DÍAS -->
+      <div>
+        <label class="text-xs font-bold text-zinc-300 block mb-2">1. Selecciona el Día:</label>
+        <div id="daysContainer" class="flex space-x-2 overflow-x-auto custom-scrollbar pb-2">
+          <!-- Renderizado dinámico de días -->
+        </div>
+      </div>
+
+      <!-- SELECCIÓN DE HORAS (12PM - 9PM) -->
+      <div>
+        <label class="text-xs font-bold text-zinc-300 block mb-2">2. Horarios Disponibles (12:00 PM - 9:00 PM):</label>
+        <div id="timeSlotsGrid" class="grid grid-cols-3 gap-2 min-h-[140px]">
+          <!-- Renderizado dinámico de horarios -->
+        </div>
+      </div>
+
+      <!-- DATOS DEL CLIENTE -->
+      <div class="space-y-2 pt-2 border-t border-zinc-800">
+        <label class="text-xs font-bold text-zinc-300 block">3. Tus Datos para Confirmar:</label>
+        <input type="text" id="clientName" placeholder="Nombre completo" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400">
+        <input type="tel" id="clientPhone" placeholder="Teléfono de contacto" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400">
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BARRA FLOTANTE DE CONFIRMACIÓN -->
+  <div class="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-4 shadow-2xl">
+    <div class="max-w-md mx-auto space-y-3">
+      
+      <div class="flex justify-between items-center text-xs">
+        <div>
+          <span class="text-zinc-400 block truncate max-w-[200px]" id="selectedSummary">Servicios: Ninguno</span>
+          <span class="text-amber-400 font-bold block mt-0.5" id="timeSummary">Cita: Selecciona día y hora</span>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <span class="text-[10px] text-zinc-400 uppercase tracking-wider block font-semibold">Total Estimado</span>
+          <span id="totalPrice" class="text-xl font-black text-white">$0</span>
+        </div>
+      </div>
+
+      <button onclick="confirmAppointment()" id="btnConfirm" disabled class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 disabled:opacity-40 disabled:from-zinc-800 disabled:to-zinc-800 text-zinc-950 font-black py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 text-sm shadow-xl transition-all active:scale-95">
+        <i class="fa-brands fa-whatsapp text-xl"></i>
+        <span>Confirmar Cita por WhatsApp</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- MODAL DE NOTIFICACIONES -->
+  <div id="customModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
+      <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center mx-auto text-amber-400 text-xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="font-cinzel text-lg font-bold text-amber-400">Atención</h3>
+      <p id="modalMessage" class="text-xs text-zinc-300 leading-relaxed"></p>
+      <button onclick="closeModal()" class="w-full gold-gradient-bg text-zinc-950 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider">
+        Entendido
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // CONTACTO PRINCIPAL CONFIGURADO
+    const BARBER_PHONE = "5573437290";
+
+    // CATÁLOGO DE SERVICIOS INDIVIDUALES
+    const SERVICES = [
+      { id: 's1', name: 'Corte de Cabello', price: 150, icon: 'fa-scissors', desc: 'Corte profesional adaptado a tu estilo y fisonomía.' },
+      { id: 's2', name: 'Barba', price: 80, icon: 'fa-user-ninja', desc: 'Perfilado, recorte y alineación precisa de barba.' },
+      { id: 's3', name: 'Ceja', price: 50, icon: 'fa-eye', desc: 'Diseño y limpieza de cejas masculina.' },
+      { id: 's4', name: 'Afeitado', price: 60, icon: 'fa-razor', desc: 'Afeitado tradicional con navaja y tratamiento refrescante.' },
+      { id: 's5', name: 'Facial', price: 100, icon: 'fa-sparkles', desc: 'Exfoliación y limpieza facial para revitalizar tu piel.' }
+    ];
+
+    // CATÁLOGO DE PAQUETES ESPECIALES
+    const PACKAGES = [
+      { id: 'p1', name: 'Black', price: 240, desc: 'Corte de Cabello + Barba + Ceja', tag: 'Popular' },
+      { id: 'p2', name: 'Lion', price: 280, desc: 'Corte de Cabello + Barba + Facial', tag: 'Recomendado' },
+      { id: 'p3', name: 'Basic Shaver', price: 150, desc: 'Afeitado + Ceja + Barba' },
+      { id: 'p4', name: 'Lion Shaver', price: 200, desc: 'Afeitado + Barba + Facial' },
+      { id: 'p5', name: 'Black Shaver', price: 230, desc: 'Afeitado + Barba + Facial + Ceja' },
+      { id: 'p6', name: 'Black Basic', price: 250, desc: 'Corte + Ceja + Facial' },
+      { id: 'p7', name: 'Lion Full', price: 350, desc: 'Corte + Barba + Facial + Ceja', tag: 'VIP Full' }
+    ];
+
+    // HORARIOS DISPONIBLES DE 12:00 PM A 9:00 PM
+    const TIME_SLOTS = [
+      "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", 
+      "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", 
+      "08:00 PM", "09:00 PM"
+    ];
+
+    let selectedServices = [];
+    let selectedDate = null;
+    let selectedTimeSlot = null;
+    let daysList = [];
+
+    // ALMACENAMIENTO GLOBAL DE CITAS RESERVADAS { "2026-11-11": ["12:00 PM", "02:00 PM"] }
+    let cloudBookings = {};
+
+    // CONFIGURACIÓN DE CONEXIÓN CON SERVIDOR RENDER
+    // Cuando lo subas a Render, cambia RENDER_SERVER_URL por tu URL (ejemplo: https://mi-barberia.onrender.com)
+    const RENDER_SERVER_URL = window.location.origin.includes('localhost') || window.location.origin.includes('file')
+      ? 'http://localhost:3000' 
+      : window.location.origin;
+
+    let socket = null;
+
+    // INICIALIZACIÓN DE LA APLICACIÓN
+    window.onload = function() {
+      generateDays();
+      renderServices();
+      renderPackages();
+      renderDays();
+      
+      initRenderSocket();
+      renderTimeSlots();
+      updateSummaryUI();
+    };
+
+    // CONEXIÓN EN TIEMPO REAL VÍA SOCKET.IO (RENDER)
+    function initRenderSocket() {
+      try {
+        socket = io(RENDER_SERVER_URL, {
+          transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', () => {
+          const badge = document.getElementById('syncBadge');
+          const text = document.getElementById('syncText');
+          if (badge && text) {
+            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold";
+            text.innerText = "Sincronizado en Vivo";
+          }
+        });
+
+        // 1. Recibir todas las citas guardadas en Render al conectarse
+        socket.on('initBookings', (bookings) => {
+          if (bookings && typeof bookings === 'object') {
+            cloudBookings = bookings;
+            renderTimeSlots();
+          }
+        });
+
+        // 2. Escuchar cuando cualquier cliente reserva una nueva cita
+        socket.on('bookingUpdated', (data) => {
+          if (data && data.dateRaw && data.timeSlot) {
+            addBookingToMemory(data.dateRaw, data.timeSlot);
+            renderTimeSlots();
+
+            // Si el usuario actual tenía seleccionada esa hora que alguien más acaba de ganar
+            if (selectedDate && selectedDate.raw === data.dateRaw && selectedTimeSlot === data.timeSlot) {
+              selectedTimeSlot = null;
+              showModal(`⚠️ El horario de las ${data.timeSlot} acaba de ser reservado por otro cliente. Por favor elige otro disponible.`);
+              updateSummaryUI();
+            }
+          }
+        });
+
+        socket.on('disconnect', () => {
+          const badge = document.getElementById('syncBadge');
+          const text = document.getElementById('syncText');
+          if (badge && text) {
+            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 text-[10px] font-bold";
+            text.innerText = "Reconectando...";
+          }
+        });
+      } catch (e) {
+        console.warn("Socket.IO backend no detectado localmente, utilizando almacenamiento distribuido.");
+        fetchFallbackBookings();
+      }
+    }
+
+    // Respaldos secundarios por si Render está en mantenimiento o en pruebas locales
+    async function fetchFallbackBookings() {
+      daysList.forEach(d => {
+        try {
+          const saved = localStorage.getItem(`barber_bookings_${d.raw}`);
+          if (saved) cloudBookings[d.raw] = JSON.parse(saved);
+        } catch(e) {}
+      });
+      renderTimeSlots();
+    }
+
+    function addBookingToMemory(dateRaw, timeSlot) {
+      if (!cloudBookings[dateRaw]) {
+        cloudBookings[dateRaw] = [];
+      }
+      if (!cloudBookings[dateRaw].includes(timeSlot)) {
+        cloudBookings[dateRaw].push(timeSlot);
+      }
+      try {
+        localStorage.setItem(`barber_bookings_${dateRaw}`, JSON.stringify(cloudBookings[dateRaw]));
+      } catch(e) {}
+    }
+
+    function showModal(msg) {
+      document.getElementById('modalMessage').innerText = msg;
+      document.getElementById('customModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('customModal').classList.add('hidden');
+    }
+
+    function switchTab(tab) {
+      const btnServicios = document.getElementById('tabServicios');
+      const btnPaquetes = document.getElementById('tabPaquetes');
+      const secServicios = document.getElementById('secServicios');
+      const secPaquetes = document.getElementById('secPaquetes');
+
+      if (tab === 'servicios') {
+        btnServicios.className = "flex-1 py-2 rounded-xl text-zinc-950 gold-gradient-bg shadow-md transition-all";
+        btnPaquetes.className = "flex-1 py-2 rounded-xl text-zinc-400 hover:text-white transition-all";
+        secServicios.classList.remove('hidden');
+        secPaquetes.classList.add('hidden');
+      } else {
+        btnPaquetes.className = "flex-1 py-2 rounded-xl text-zinc-950 gold-gradient-bg shadow-md transition-all";
+        btnServicios.className = "flex-1 py-2 rounded-xl text-zinc-400 hover:text-white transition-all";
+        secPaquetes.classList.remove('hidden');
+        secServicios.classList.add('hidden');
+      }
+    }
+
+    function renderServices() {
+      const container = document.getElementById('secServicios');
+      container.innerHTML = '';
+      SERVICES.forEach(s => {
+        const isSel = selectedServices.some(item => item.id === s.id);
+        const card = document.createElement('div');
+        card.onclick = () => toggleService(s);
+        card.className = `p-3.5 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
+          isSel 
+            ? 'bg-amber-500/10 border-amber-400 text-white shadow-lg shadow-amber-500/10' 
+            : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300'
+        }`;
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl ${isSel ? 'gold-gradient-bg text-zinc-950' : 'bg-zinc-800 text-amber-400'} flex items-center justify-center font-bold">
+              <i class="fa-solid ${s.icon}"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-xs text-white">${s.name}</h4>
+              <p class="text-[11px] text-zinc-400 leading-tight mt-0.5">${s.desc}</p>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0 ml-2">
+            <span class="font-black text-amber-400 text-sm">$${s.price}</span>
+            <div class="text-[10px] font-bold ${isSel ? 'text-amber-400' : 'text-zinc-500'}">
+              ${isSel ? '<i class="fa-solid fa-circle-check"></i> Elegido' : '+ Agregar'}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderPackages() {
+      const container = document.getElementById('secPaquetes');
+      container.innerHTML = '';
+      PACKAGES.forEach(p => {
+        const isSel = selectedServices.some(item => item.id === p.id);
+        const card = document.createElement('div');
+        card.onclick = () => toggleService(p);
+        card.className = `p-3.5 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
+          isSel 
+            ? 'bg-amber-500/10 border-amber-400 text-white shadow-lg shadow-amber-500/10' 
+            : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300'
+        }`;
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl ${isSel ? 'gold-gradient-bg text-zinc-950' : 'bg-zinc-800 text-amber-400'} flex items-center justify-center font-bold">
+              <i class="fa-solid fa-crown"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h4 class="font-bold text-xs text-white">Paquete ${p.name}</h4>
+                ${p.tag ? `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] px-1.5 py-0.2 rounded font-bold">${p.tag}</span>` : ''}
+              </div>
+              <p class="text-[11px] text-zinc-400 leading-tight mt-0.5">${p.desc}</p>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0 ml-2">
+            <span class="font-black text-amber-400 text-sm">$${p.price}</span>
+            <div class="text-[10px] font-bold ${isSel ? 'text-amber-400' : 'text-zinc-500'}">
+              ${isSel ? '<i class="fa-solid fa-circle-check"></i> Elegido' : '+ Agregar'}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleService(item) {
+      const index = selectedServices.findIndex(s => s.id === item.id);
+      if (index >= 0) {
+        selectedServices.splice(index, 1);
+      } else {
+        selectedServices.push(item);
+      }
+      renderServices();
+      renderPackages();
+      updateSummaryUI();
+    }
+
+    function generateDays() {
+      daysList = [];
+      const today = new Date();
+      const optionsDay = { weekday: 'short' };
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
+        const dayName = d.toLocaleDateString('es-ES', optionsDay).replace('.', '');
+        const dayNum = d.getDate();
+        
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(dayNum).padStart(2, '0');
+        const rawDate = `${year}-${month}-${day}`;
+
+        daysList.push({
+          raw: rawDate,
+          dayName: dayName.toUpperCase(),
+          dayNum: dayNum,
+          label: `${dayName.toUpperCase()} ${dayNum}`
+        });
+      }
+      selectedDate = daysList[0];
+    }
+
+    function renderDays() {
+      const container = document.getElementById('daysContainer');
+      container.innerHTML = '';
+
+      daysList.forEach(d => {
+        const isSel = selectedDate && selectedDate.raw === d.raw;
+        const btn = document.createElement('button');
+        btn.onclick = () => {
+          selectedDate = d;
+          selectedTimeSlot = null;
+          renderDays();
+          renderTimeSlots();
+          updateSummaryUI();
+        };
+        btn.className = `flex-shrink-0 px-3.5 py-2 rounded-xl text-center border transition-all ${
+          isSel 
+            ? 'gold-gradient-bg text-zinc-950 font-black shadow-md border-amber-300' 
+            : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+        }`;
+        btn.innerHTML = `
+          <span class="text-[10px] block uppercase font-bold tracking-wider">${d.dayName}</span>
+          <span class="text-sm font-extrabold block">${d.dayNum}</span>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function renderTimeSlots() {
+      const container = document.getElementById('timeSlotsGrid');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const bookedSlots = cloudBookings[selectedDate.raw] || [];
+
+      TIME_SLOTS.forEach(slot => {
+        const isBooked = bookedSlots.includes(slot);
+        const isSel = selectedTimeSlot === slot;
+
+        const btn = document.createElement('button');
+        btn.disabled = isBooked;
+        
+        if (!isBooked) {
+          btn.onclick = () => {
+            selectedTimeSlot = slot;
+            renderTimeSlots();
+            updateSummaryUI();
+          };
+        } else if (isSel) {
+          selectedTimeSlot = null; // Si fue tomado mientras lo seleccionaba
+        }
+
+        btn.className = `py-2.5 px-2 rounded-xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-0.5 ${
+          isBooked
+            ? 'bg-zinc-950/80 border-rose-900/30 text-zinc-600 cursor-not-allowed opacity-60'
+            : isSel
+              ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-md shadow-amber-500/10'
+              : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-amber-400/50 hover:text-white'
+        }`;
+
+        btn.innerHTML = `
+          <span>${slot}</span>
+          <span class="text-[9px] ${isBooked ? 'text-rose-500' : isSel ? 'text-amber-400 font-black' : 'text-emerald-400'} font-semibold flex items-center gap-1">
+            ${isBooked ? '<i class="fa-solid fa-lock text-[8px]"></i> Ocupado' : '<i class="fa-solid fa-circle text-[6px]"></i> Disponible'}
+          </span>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function updateSummaryUI() {
+      const selectedSummary = document.getElementById('selectedSummary');
+      const timeSummary = document.getElementById('timeSummary');
+      const totalPriceEl = document.getElementById('totalPrice');
+      const btnConfirm = document.getElementById('btnConfirm');
+
+      const total = selectedServices.reduce((sum, item) => sum + item.price, 0);
+      totalPriceEl.innerText = `$${total}`;
+
+      if (selectedServices.length > 0) {
+        selectedSummary.innerText = `Servicios (${selectedServices.length}): ` + selectedServices.map(s => s.name).join(', ');
+      } else {
+        selectedSummary.innerText = "Servicios: Ninguno seleccionado";
+      }
+
+      if (selectedDate && selectedTimeSlot) {
+        timeSummary.innerText = `Cita: ${selectedDate.label} a las ${selectedTimeSlot}`;
+      } else if (selectedDate) {
+        timeSummary.innerText = `Cita: ${selectedDate.label} - Selecciona hora`;
+      } else {
+        timeSummary.innerText = "Cita: Selecciona día y hora";
+      }
+
+      if (selectedServices.length > 0 && selectedDate && selectedTimeSlot) {
+        btnConfirm.disabled = false;
+      } else {
+        btnConfirm.disabled = true;
+      }
+    }
+
+    async function confirmAppointment() {
+      const name = document.getElementById('clientName').value.trim();
+      const phone = document.getElementById('clientPhone').value.trim();
+
+      if (!name || !phone) {
+        showModal("Por favor ingresa tu Nombre completo y Teléfono de contacto para agendar tu cita.");
+        return;
+      }
+
+      // Validar si la cita fue tomada antes de hacer clic
+      const currentBookings = cloudBookings[selectedDate.raw] || [];
+      if (currentBookings.includes(selectedTimeSlot)) {
+        showModal("¡Lo sentimos! Otro cliente acaba de reservar este horario. Por favor elige otra hora disponible.");
+        selectedTimeSlot = null;
+        renderTimeSlots();
+        updateSummaryUI();
+        return;
+      }
+
+      // 1. Guardar localmente
+      addBookingToMemory(selectedDate.raw, selectedTimeSlot);
+
+      // 2. Transmitir inmediatamente al Servidor Render (Socket.IO)
+      if (socket && socket.connected) {
+        socket.emit('newBooking', {
+          dateRaw: selectedDate.raw,
+          timeSlot: selectedTimeSlot,
+          clientName: name,
+          clientPhone: phone
+        });
+      }
+
+      const servicesText = selectedServices.map(s => `• ${s.name} ($${s.price})`).join('\n');
+      const total = selectedServices.reduce((sum, item) => sum + item.price, 0);
+
+      // 3. Preparar mensaje de WhatsApp
+      let msg = `🦁 *RESERVACIÓN DE CITA - THE BLACK LION BARBER SHOP* 🦁\n\n`;
+      msg += `👤 *Cliente:* ${name}\n`;
+      msg += `📞 *Teléfono:* ${phone}\n`;
+      msg += `📅 *Día:* ${selectedDate.label}\n`;
+      msg += `⏰ *Hora:* ${selectedTimeSlot}\n\n`;
+      msg += `✂️ *Servicios Solicitados:*\n${servicesText}\n\n`;
+      msg += `💰 *Total Estimado:* $${total}\n`;
+      msg += `📍 *Ubicación:* Av. Océano de las Tempestades Mz. 44 Lt. 5\n\n`;
+      msg += `Solicito confirmación de mi reservación. ¡Muchas gracias!`;
+
+      const waUrl = `https://wa.me/${BARBER_PHONE}?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank');
+
+      // Actualizar vista local
+      renderTimeSlots();
+      updateSummaryUI();
+    }
+  </script>
+</body>
+</html>
