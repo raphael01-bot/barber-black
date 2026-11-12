@@ -8,7 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Socket.IO Client para Sincronización Realtime en Render -->
+  <!-- Socket.IO Client para Render -->
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -57,10 +57,15 @@
         </div>
       </div>
 
-      <!-- BADGE DE BEBIDA DE CORTESÍA -->
-      <div class="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1.5">
-        <i class="fa-solid fa-martini-glass-citrus text-xs"></i>
-        <span>Bebida Gratis</span>
+      <!-- BADGE DE BEBIDA DE CORTESÍA Y ACCESO DUEÑO -->
+      <div class="flex items-center gap-2">
+        <div class="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-martini-glass-citrus text-xs"></i>
+          <span>Bebida Gratis</span>
+        </div>
+        <button onclick="openAdminAuth()" title="Panel del Dueño" class="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-amber-400/60 text-zinc-400 hover:text-amber-400 flex items-center justify-center transition-all">
+          <i class="fa-solid fa-lock text-xs"></i>
+        </button>
       </div>
 
     </div>
@@ -81,35 +86,33 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main class="max-w-md mx-auto px-4 pt-4 space-y-6">
 
-    <!-- TARJETA DE CITA ACTIVA DEL CLIENTE (APARECE SI YA RESERVÓ) -->
-    <section id="myActiveAppointmentCard" class="hidden bg-zinc-900 border-2 border-amber-400/70 rounded-3xl p-4 shadow-2xl space-y-3 relative overflow-hidden">
-      <div class="flex items-center justify-between border-b border-zinc-800 pb-2.5">
-        <span class="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-solid fa-ticket text-amber-400"></i>
-          Tu Cita Agendada
-        </span>
-        <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+    <!-- TARJETA DE CITA ACTIVA DEL CLIENTE (PARA CANCELAR) -->
+    <div id="activeBookingCard" class="hidden bg-zinc-900 border-2 border-amber-400/80 rounded-2xl p-4 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+          <i class="fa-solid fa-calendar-check"></i>
+          <span>Tu Cita Reservada</span>
+        </div>
+        <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] px-2 py-0.5 rounded-full font-bold">
           Confirmada
         </span>
       </div>
-
-      <div class="text-xs space-y-1 text-zinc-300">
-        <p><strong class="text-white">Cliente:</strong> <span id="activeClientName"></span></p>
-        <p><strong class="text-white">Fecha y Hora:</strong> <span id="activeDateTime" class="text-amber-300 font-bold"></span></p>
-        <p><strong class="text-white">Servicios:</strong> <span id="activeServicesList"></span></p>
+      <div class="text-xs text-zinc-300 space-y-1 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+        <p><strong class="text-zinc-400">Cliente:</strong> <span id="myBookingName" class="text-white"></span></p>
+        <p><strong class="text-zinc-400">Día y Hora:</strong> <span id="myBookingDateTime" class="text-amber-400 font-bold"></span></p>
+        <p><strong class="text-zinc-400">Servicios:</strong> <span id="myBookingServices" class="text-zinc-200"></span></p>
       </div>
-
-      <button onclick="openCancelModal()" class="w-full mt-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/50 text-rose-400 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95">
+      <button onclick="openCancelModal()" class="w-full bg-rose-600/20 hover:bg-rose-600 border border-rose-500/50 text-rose-300 hover:text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
         <i class="fa-solid fa-calendar-xmark"></i>
-        <span>Cancelar mi Cita</span>
+        <span>Cancelar mi Cita y Liberar Horario</span>
       </button>
-    </section>
+    </div>
 
     <!-- LEYENDA INDICATIVA DESTACADA -->
     <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl p-3.5 text-center shadow-xl bg-gradient-to-r from-zinc-900 via-amber-950/20 to-zinc-900">
       <p class="text-xs font-bold text-amber-300 flex items-center justify-center gap-2">
-        <i class="fa-solid fa-scissors text-amber-400"></i>
-        <span>Reserva tu cita fácilmente en línea y confirma por WhatsApp.</span>
+        <i class="fa-solid fa-hand-pointer text-amber-400 animate-bounce"></i>
+        <span>Horarios sincronizados en vivo entre todos los celulares.</span>
       </p>
     </div>
 
@@ -136,12 +139,12 @@
 
     <!-- CATÁLOGO DE SERVICIOS INDIVIDUALES -->
     <section id="secServicios" class="space-y-3">
-      <!-- Se inserta mediante Javascript -->
+      <!-- Renderizado por JS -->
     </section>
 
     <!-- CATÁLOGO DE PAQUETES ESPECIALES -->
     <section id="secPaquetes" class="hidden space-y-3">
-      <!-- Se inserta mediante Javascript -->
+      <!-- Renderizado por JS -->
     </section>
 
     <!-- SECCIÓN DE AGENDADO DE CITAS -->
@@ -156,7 +159,7 @@
         </div>
         <div id="syncBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span id="syncText">Sincronizado</span>
+          <span>En Vivo</span>
         </div>
       </div>
 
@@ -209,13 +212,13 @@
     </div>
   </div>
 
-  <!-- MODAL DE NOTIFICACIONES GENERALES -->
+  <!-- MODAL DE NOTIFICACIONES -->
   <div id="customModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
       <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center mx-auto text-amber-400 text-xl">
-        <i class="fa-solid fa-triangle-exclamation"></i>
+        <i class="fa-solid fa-bell"></i>
       </div>
-      <h3 class="font-cinzel text-lg font-bold text-amber-400">Atención</h3>
+      <h3 class="font-cinzel text-lg font-bold text-amber-400">Aviso</h3>
       <p id="modalMessage" class="text-xs text-zinc-300 leading-relaxed"></p>
       <button onclick="closeModal()" class="w-full gold-gradient-bg text-zinc-950 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider">
         Entendido
@@ -231,7 +234,7 @@
       </div>
       <h3 class="font-cinzel text-lg font-bold text-rose-400">¿Cancelar tu Cita?</h3>
       <p class="text-xs text-zinc-300 leading-relaxed">
-        El horario volverá a estar disponible para otros clientes y se abrirá WhatsApp para notificar a la barbería.
+        El horario volverá a aparecer como <strong>Disponible</strong> para otros clientes y se abrirá WhatsApp para notificar a la barbería.
       </p>
       <div class="flex gap-2">
         <button onclick="closeCancelModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-xl text-xs">
@@ -244,12 +247,99 @@
     </div>
   </div>
 
+  <!-- MODAL DE CONTRASEÑA PARA EL DUEÑO -->
+  <div id="adminAuthModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
+      <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center mx-auto text-amber-400 text-xl">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <div>
+        <h3 class="font-cinzel text-lg font-bold text-amber-400">Acceso del Dueño</h3>
+        <p class="text-[11px] text-zinc-400 mt-1">Ingresa la contraseña de administrador para gestionar precios y promociones.</p>
+      </div>
+      <input type="password" id="adminPasswordInput" placeholder="Contraseña..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white text-center tracking-widest focus:outline-none focus:border-amber-400">
+      <p id="adminAuthError" class="text-[11px] text-rose-400 hidden font-semibold">Contraseña incorrecta</p>
+      <div class="flex gap-2">
+        <button onclick="closeAdminAuth()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-xl text-xs">
+          Cancelar
+        </button>
+        <button onclick="verifyAdminPassword()" class="flex-1 gold-gradient-bg text-zinc-950 font-black py-2.5 rounded-xl text-xs uppercase">
+          Entrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL DE ADMINISTRACIÓN DEL DUEÑO -->
+  <div id="adminDashboardModal" class="fixed inset-0 z-50 bg-zinc-950/95 backdrop-blur-md hidden overflow-y-auto p-4">
+    <div class="max-w-md mx-auto bg-zinc-900 border border-amber-500/40 rounded-3xl p-5 shadow-2xl space-y-5 my-4">
+      
+      <!-- Header Admin -->
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div>
+          <h3 class="font-cinzel text-base font-bold text-amber-400 flex items-center gap-2">
+            <i class="fa-solid fa-crown"></i> Panel del Dueño
+          </h3>
+          <p class="text-[11px] text-zinc-400">Edita precios, promociones y horarios</p>
+        </div>
+        <button onclick="closeAdminDashboard()" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Formulario para Agregar Nuevo Servicio o Promoción -->
+      <div class="bg-zinc-950 p-3.5 rounded-2xl border border-zinc-800 space-y-3">
+        <h4 class="text-xs font-bold text-amber-300 uppercase tracking-wider">➕ Agregar Promoción / Servicio</h4>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <select id="newItemType" class="bg-zinc-900 border border-zinc-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+            <option value="service">Servicio Individual</option>
+            <option value="package">Paquete / Promoción</option>
+          </select>
+          <input type="number" id="newItemPrice" placeholder="Precio ($)" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+        </div>
+
+        <input type="text" id="newItemName" placeholder="Nombre (ej. Promo Fin de Semana)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+        <input type="text" id="newItemDesc" placeholder="Descripción (ej. Corte + Barba + Bebida)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+        <input type="text" id="newItemTag" placeholder="Etiqueta opcional (ej. OFERTA, NUEVO)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+
+        <button onclick="adminAddNewItem()" class="w-full gold-gradient-bg text-zinc-950 font-black py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-lg">
+          Publicar en el Menú
+        </button>
+      </div>
+
+      <!-- Lista Editable de Servicios y Paquetes -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-zinc-300 uppercase tracking-wider">✏️ Editar Precios o Eliminar</h4>
+        <div id="adminCatalogList" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+
+      <!-- Gestión Rápida de Horarios Ocupados del Día Actual -->
+      <div class="space-y-2 border-t border-zinc-800 pt-3">
+        <h4 class="text-xs font-bold text-zinc-300 uppercase tracking-wider">📅 Liberar Horarios (<span id="adminCurrentDayLabel"></span>)</h4>
+        <div id="adminSlotsList" class="flex flex-wrap gap-1.5">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+
+      <button onclick="saveAndBroadcastCatalog()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-xl flex items-center justify-center gap-2">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>Guardar y Actualizar para Todos</span>
+      </button>
+
+    </div>
+  </div>
+
   <script>
     // CONTACTO PRINCIPAL CONFIGURADO
     const BARBER_PHONE = "5620956435";
+    // CONTRASEÑA DEL DUEÑO
+    const ADMIN_PASS = "blacklion2026";
 
-    // CATÁLOGO DE SERVICIOS INDIVIDUALES
-    const SERVICES = [
+    // CATÁLOGO POR DEFECTO DE SERVICIOS INDIVIDUALES
+    const DEFAULT_SERVICES = [
       { id: 's1', name: 'Corte de Cabello', price: 150, icon: 'fa-scissors', desc: 'Corte profesional adaptado a tu estilo y fisonomía.' },
       { id: 's2', name: 'Barba', price: 80, icon: 'fa-user-ninja', desc: 'Perfilado, recorte y alineación precisa de barba.' },
       { id: 's3', name: 'Ceja', price: 50, icon: 'fa-eye', desc: 'Diseño y limpieza de cejas masculina.' },
@@ -257,8 +347,8 @@
       { id: 's5', name: 'Facial', price: 100, icon: 'fa-sparkles', desc: 'Exfoliación y limpieza facial para revitalizar tu piel.' }
     ];
 
-    // CATÁLOGO DE PAQUETES ESPECIALES
-    const PACKAGES = [
+    // CATÁLOGO POR DEFECTO DE PAQUETES ESPECIALES
+    const DEFAULT_PACKAGES = [
       { id: 'p1', name: 'Black', price: 240, desc: 'Corte de Cabello + Barba + Ceja', tag: 'Popular' },
       { id: 'p2', name: 'Lion', price: 280, desc: 'Corte de Cabello + Barba + Facial', tag: 'Recomendado' },
       { id: 'p3', name: 'Basic Shaver', price: 150, desc: 'Afeitado + Ceja + Barba' },
@@ -267,6 +357,9 @@
       { id: 'p6', name: 'Black Basic', price: 250, desc: 'Corte + Ceja + Facial' },
       { id: 'p7', name: 'Lion Full', price: 350, desc: 'Corte + Barba + Facial + Ceja', tag: 'VIP Full' }
     ];
+
+    let SERVICES = [...DEFAULT_SERVICES];
+    let PACKAGES = [...DEFAULT_PACKAGES];
 
     // HORARIOS DISPONIBLES DE 12:00 PM A 9:00 PM
     const TIME_SLOTS = [
@@ -279,26 +372,18 @@
     let selectedDate = null;
     let selectedTimeSlot = null;
     let daysList = [];
-
-    // ALMACENAMIENTO GLOBAL DE CITAS RESERVADAS { "2026-11-11": ["12:00 PM", "02:00 PM"] }
     let cloudBookings = {};
-
-    // CITA ACTUAL DEL USUARIO EN ESTE NAVEGADOR
     let myActiveBooking = null;
-
-    // CONFIGURACIÓN DE CONEXIÓN CON SERVIDOR RENDER
-    const RENDER_SERVER_URL = window.location.origin.includes('localhost') || window.location.origin.includes('file')
-      ? 'http://localhost:3000' 
-      : window.location.origin;
-
     let socket = null;
 
     // INICIALIZACIÓN DE LA APLICACIÓN
     window.onload = function() {
+      loadCatalogLocal();
       generateDays();
       renderServices();
       renderPackages();
       renderDays();
+      loadLocalBookings();
       loadMyActiveBooking();
       
       initRenderSocket();
@@ -306,74 +391,57 @@
       updateSummaryUI();
     };
 
-    // CONEXIÓN EN TIEMPO REAL VÍA SOCKET.IO (RENDER)
+    // CONEXIÓN CON SERVIDOR NODE.JS EN RENDER VÍA SOCKET.IO
     function initRenderSocket() {
       try {
-        socket = io(RENDER_SERVER_URL, {
-          transports: ['websocket', 'polling']
-        });
+        if (typeof io !== 'undefined') {
+          socket = io();
 
-        socket.on('connect', () => {
-          const badge = document.getElementById('syncBadge');
-          const text = document.getElementById('syncText');
-          if (badge && text) {
-            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold";
-            text.innerText = "Sincronizado en Vivo";
-          }
-        });
-
-        // 1. Recibir todas las citas guardadas en Render al conectarse
-        socket.on('initBookings', (bookings) => {
-          if (bookings && typeof bookings === 'object') {
-            cloudBookings = bookings;
-            renderTimeSlots();
-          }
-        });
-
-        // 2. Escuchar cuando cualquier cliente reserva una nueva cita
-        socket.on('bookingUpdated', (data) => {
-          if (data && data.dateRaw && data.timeSlot) {
-            addBookingToMemory(data.dateRaw, data.timeSlot);
-            renderTimeSlots();
-
-            if (selectedDate && selectedDate.raw === data.dateRaw && selectedTimeSlot === data.timeSlot) {
-              selectedTimeSlot = null;
-              showModal(`⚠️ El horario de las ${data.timeSlot} acaba de ser reservado por otro cliente. Por favor elige otro disponible.`);
-              updateSummaryUI();
+          socket.on('connect', () => {
+            const badge = document.getElementById('syncBadge');
+            if (badge) {
+              badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span><span>En Vivo</span>`;
             }
-          }
-        });
+          });
 
-        // 3. Escuchar cuando un cliente CANCELA y libera un horario
-        socket.on('bookingCancelled', (data) => {
-          if (data && data.dateRaw && data.timeSlot) {
-            removeBookingFromMemory(data.dateRaw, data.timeSlot);
-            renderTimeSlots();
-          }
-        });
+          // 1. Recibir todas las citas existentes al entrar
+          socket.on('initBookings', (serverBookings) => {
+            if (serverBookings && typeof serverBookings === 'object') {
+              cloudBookings = serverBookings;
+              renderTimeSlots();
+            }
+          });
 
-        socket.on('disconnect', () => {
-          const badge = document.getElementById('syncBadge');
-          const text = document.getElementById('syncText');
-          if (badge && text) {
-            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 text-[10px] font-bold";
-            text.innerText = "Reconectando...";
-          }
-        });
+          // 2. Escuchar cuando cualquier usuario reserva un horario
+          socket.on('bookingUpdated', (data) => {
+            if (data && data.dateRaw && data.timeSlot) {
+              addBookingToMemory(data.dateRaw, data.timeSlot);
+              renderTimeSlots();
+            }
+          });
+
+          // 3. Escuchar cuando un cliente o dueño CANCELA y libera un horario
+          socket.on('bookingCancelled', (data) => {
+            if (data && data.dateRaw && data.timeSlot) {
+              removeBookingFromMemory(data.dateRaw, data.timeSlot);
+              renderTimeSlots();
+            }
+          });
+
+          // 4. Recibir catálogo actualizado por el dueño desde el servidor
+          socket.on('catalogUpdated', (catalog) => {
+            if (catalog && Array.isArray(catalog.services) && Array.isArray(catalog.packages)) {
+              SERVICES = catalog.services;
+              PACKAGES = catalog.packages;
+              saveCatalogLocal();
+              renderServices();
+              renderPackages();
+            }
+          });
+        }
       } catch (e) {
-        console.warn("Socket.IO backend no detectado localmente.");
-        fetchFallbackBookings();
+        console.warn("Modo vista previa local activo");
       }
-    }
-
-    async function fetchFallbackBookings() {
-      daysList.forEach(d => {
-        try {
-          const saved = localStorage.getItem(`barber_bookings_${d.raw}`);
-          if (saved) cloudBookings[d.raw] = JSON.parse(saved);
-        } catch(e) {}
-      });
-      renderTimeSlots();
     }
 
     function addBookingToMemory(dateRaw, timeSlot) {
@@ -397,23 +465,33 @@
       }
     }
 
-    // GESTIÓN DE LA CITA DEL PROPIO CLIENTE (PARA MOSTRAR BOTÓN CANCELAR)
+    function loadLocalBookings() {
+      daysList.forEach(d => {
+        try {
+          const saved = localStorage.getItem(`barber_bookings_${d.raw}`);
+          if (saved) {
+            cloudBookings[d.raw] = JSON.parse(saved);
+          }
+        } catch(e) {}
+      });
+    }
+
     function loadMyActiveBooking() {
       try {
-        const saved = localStorage.getItem('black_lion_my_appointment');
+        const saved = localStorage.getItem('black_lion_my_booking');
         if (saved) {
           myActiveBooking = JSON.parse(saved);
-          renderMyActiveAppointmentUI();
+          renderActiveBookingCard();
         }
       } catch(e) {}
     }
 
-    function renderMyActiveAppointmentUI() {
-      const card = document.getElementById('myActiveAppointmentCard');
+    function renderActiveBookingCard() {
+      const card = document.getElementById('activeBookingCard');
       if (myActiveBooking) {
-        document.getElementById('activeClientName').innerText = myActiveBooking.clientName;
-        document.getElementById('activeDateTime').innerText = `${myActiveBooking.dateLabel} • ${myActiveBooking.timeSlot}`;
-        document.getElementById('activeServicesList').innerText = myActiveBooking.servicesNames;
+        document.getElementById('myBookingName').innerText = myActiveBooking.clientName;
+        document.getElementById('myBookingDateTime').innerText = `${myActiveBooking.dateLabel} a las ${myActiveBooking.timeSlot}`;
+        document.getElementById('myBookingServices').innerText = myActiveBooking.servicesList;
         card.classList.remove('hidden');
       } else {
         card.classList.add('hidden');
@@ -429,41 +507,58 @@
     }
 
     function executeCancelAppointment() {
-      closeCancelModal();
       if (!myActiveBooking) return;
 
-      const { dateRaw, dateLabel, timeSlot, clientName, clientPhone, servicesNames } = myActiveBooking;
+      const { dateRaw, dateLabel, timeSlot, clientName, clientPhone, servicesList } = myActiveBooking;
 
-      // 1. Eliminar de la memoria local y habilitar nuevamente la hora
+      // 1. Liberar horario localmente
       removeBookingFromMemory(dateRaw, timeSlot);
 
-      // 2. Avisar en tiempo real al servidor en Render para que todos los usuarios lo vean disponible
+      // 2. Notificar al servidor en Render para liberar horario a todos los usuarios
       if (socket && socket.connected) {
-        socket.emit('cancelBooking', {
-          dateRaw: dateRaw,
-          timeSlot: timeSlot
-        });
+        socket.emit('cancelBooking', { dateRaw, timeSlot });
       }
 
-      // 3. Limpiar tarjeta de cita activa
+      // 3. Limpiar cita activa del navegador del cliente
+      localStorage.removeItem('black_lion_my_booking');
       myActiveBooking = null;
-      try {
-        localStorage.removeItem('black_lion_my_appointment');
-      } catch(e) {}
-      renderMyActiveAppointmentUI();
+      renderActiveBookingCard();
+      closeCancelModal();
       renderTimeSlots();
 
-      // 4. Preparar mensaje de WhatsApp notificando la cancelación
+      // 4. Preparar mensaje de WhatsApp notificando cancelación
       let msg = `❌ *CANCELACIÓN DE CITA - THE BLACK LION BARBER SHOP* ❌\n\n`;
       msg += `👤 *Cliente:* ${clientName}\n`;
       msg += `📞 *Teléfono:* ${clientPhone}\n`;
-      msg += `📅 *Día:* ${dateLabel}\n`;
-      msg += `⏰ *Hora liberada:* ${timeSlot}\n`;
-      msg += `✂️ *Servicios:* ${servicesNames}\n\n`;
-      msg += `Informo que he cancelado mi reservación y este horario ha quedado disponible nuevamente. ¡Gracias!`;
+      msg += `📅 *Día Cancelado:* ${dateLabel}\n`;
+      msg += `⏰ *Hora Liberada:* ${timeSlot}\n`;
+      msg += `✂️ *Servicios:* ${servicesList}\n\n`;
+      msg += `Informo que no podré asistir y he cancelado mi cita para liberar el horario. ¡Gracias!`;
 
       const waUrl = `https://wa.me/${BARBER_PHONE}?text=${encodeURIComponent(msg)}`;
       window.open(waUrl, '_blank');
+
+      showModal("Tu cita ha sido cancelada y el horario vuelve a estar disponible en la página.");
+    }
+
+    function loadCatalogLocal() {
+      try {
+        const saved = localStorage.getItem('black_lion_catalog');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.services) SERVICES = parsed.services;
+          if (parsed.packages) PACKAGES = parsed.packages;
+        }
+      } catch(e) {}
+    }
+
+    function saveCatalogLocal() {
+      try {
+        localStorage.setItem('black_lion_catalog', JSON.stringify({
+          services: SERVICES,
+          packages: PACKAGES
+        }));
+      } catch(e) {}
     }
 
     function showModal(msg) {
@@ -509,7 +604,7 @@
         card.innerHTML = `
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-xl ${isSel ? 'gold-gradient-bg text-zinc-950' : 'bg-zinc-800 text-amber-400'} flex items-center justify-center font-bold">
-              <i class="fa-solid ${s.icon}"></i>
+              <i class="fa-solid ${s.icon || 'fa-scissors'}"></i>
             </div>
             <div>
               <h4 class="font-bold text-xs text-white">${s.name}</h4>
@@ -630,7 +725,7 @@
 
     function renderTimeSlots() {
       const container = document.getElementById('timeSlotsGrid');
-      if (!container) return;
+      if (!container || !selectedDate) return;
       container.innerHTML = '';
 
       const bookedSlots = cloudBookings[selectedDate.raw] || [];
@@ -693,14 +788,10 @@
         timeSummary.innerText = "Cita: Selecciona día y hora";
       }
 
-      if (selectedServices.length > 0 && selectedDate && selectedTimeSlot) {
-        btnConfirm.disabled = false;
-      } else {
-        btnConfirm.disabled = true;
-      }
+      btnConfirm.disabled = !(selectedServices.length > 0 && selectedDate && selectedTimeSlot);
     }
 
-    async function confirmAppointment() {
+    function confirmAppointment() {
       const name = document.getElementById('clientName').value.trim();
       const phone = document.getElementById('clientPhone').value.trim();
 
@@ -718,38 +809,37 @@
         return;
       }
 
-      // 1. Guardar en memoria local
+      // 1. Marcar como reservado en memoria
       addBookingToMemory(selectedDate.raw, selectedTimeSlot);
 
-      // 2. Guardar datos de la cita del cliente para que le aparezca la opción "Cancelar Cita"
+      // 2. Enviar al servidor Render para bloquear el horario a otros clientes
+      if (socket && socket.connected) {
+        socket.emit('newBooking', {
+          dateRaw: selectedDate.raw,
+          timeSlot: selectedTimeSlot,
+          clientName: name
+        });
+      }
+
       const servicesNames = selectedServices.map(s => s.name).join(', ');
+      const servicesText = selectedServices.map(s => `• ${s.name} ($${s.price})`).join('\n');
+      const total = selectedServices.reduce((sum, item) => sum + item.price, 0);
+
+      // 3. Guardar cita activa en el teléfono del cliente para que pueda cancelarla si gusta
       myActiveBooking = {
         dateRaw: selectedDate.raw,
         dateLabel: selectedDate.label,
         timeSlot: selectedTimeSlot,
         clientName: name,
         clientPhone: phone,
-        servicesNames: servicesNames
+        servicesList: servicesNames
       };
       try {
-        localStorage.setItem('black_lion_my_appointment', JSON.stringify(myActiveBooking));
+        localStorage.setItem('black_lion_my_booking', JSON.stringify(myActiveBooking));
       } catch(e) {}
-      renderMyActiveAppointmentUI();
+      renderActiveBookingCard();
 
-      // 3. Transmitir inmediatamente al Servidor Render (Socket.IO)
-      if (socket && socket.connected) {
-        socket.emit('newBooking', {
-          dateRaw: selectedDate.raw,
-          timeSlot: selectedTimeSlot,
-          clientName: name,
-          clientPhone: phone
-        });
-      }
-
-      const servicesText = selectedServices.map(s => `• ${s.name} ($${s.price})`).join('\n');
-      const total = selectedServices.reduce((sum, item) => sum + item.price, 0);
-
-      // 4. Preparar mensaje de WhatsApp
+      // 4. Abrir WhatsApp con los detalles
       let msg = `🦁 *RESERVACIÓN DE CITA - THE BLACK LION BARBER SHOP* 🦁\n\n`;
       msg += `👤 *Cliente:* ${name}\n`;
       msg += `📞 *Teléfono:* ${phone}\n`;
@@ -763,10 +853,178 @@
       const waUrl = `https://wa.me/${BARBER_PHONE}?text=${encodeURIComponent(msg)}`;
       window.open(waUrl, '_blank');
 
-      // Limpiar selección actual y actualizar vista
       selectedTimeSlot = null;
       renderTimeSlots();
       updateSummaryUI();
+    }
+
+    // --- FUNCIONES DEL PANEL DE ADMINISTRADOR (DUEÑO) ---
+    function openAdminAuth() {
+      document.getElementById('adminPasswordInput').value = '';
+      document.getElementById('adminAuthError').classList.add('hidden');
+      document.getElementById('adminAuthModal').classList.remove('hidden');
+    }
+
+    function closeAdminAuth() {
+      document.getElementById('adminAuthModal').classList.add('hidden');
+    }
+
+    function verifyAdminPassword() {
+      const input = document.getElementById('adminPasswordInput').value;
+      if (input === ADMIN_PASS) {
+        closeAdminAuth();
+        openAdminDashboard();
+      } else {
+        document.getElementById('adminAuthError').classList.remove('hidden');
+      }
+    }
+
+    function openAdminDashboard() {
+      renderAdminCatalogList();
+      renderAdminSlotsList();
+      document.getElementById('adminDashboardModal').classList.remove('hidden');
+    }
+
+    function closeAdminDashboard() {
+      document.getElementById('adminDashboardModal').classList.add('hidden');
+    }
+
+    function renderAdminCatalogList() {
+      const container = document.getElementById('adminCatalogList');
+      container.innerHTML = '';
+
+      const allItems = [
+        ...SERVICES.map(s => ({ ...s, category: 'service' })),
+        ...PACKAGES.map(p => ({ ...p, category: 'package' }))
+      ];
+
+      allItems.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = "bg-zinc-950 border border-zinc-800 p-2.5 rounded-xl flex items-center justify-between gap-2";
+        row.innerHTML = `
+          <div class="flex-1 min-w-0">
+            <span class="text-[9px] uppercase font-bold ${item.category === 'package' ? 'text-amber-400' : 'text-zinc-500'}">
+              ${item.category === 'package' ? '👑 Paquete/Promo' : '✂️ Servicio'}
+            </span>
+            <p class="text-xs font-bold text-white truncate">${item.name}</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-zinc-400">$</span>
+            <input type="number" value="${item.price}" onchange="adminUpdatePrice('${item.category}', '${item.id}', this.value)" class="w-16 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-amber-400 font-bold text-right">
+            <button onclick="adminDeleteItem('${item.category}', '${item.id}')" class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
+              <i class="fa-solid fa-trash text-[10px]"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function adminUpdatePrice(category, id, newPrice) {
+      const priceNum = parseFloat(newPrice) || 0;
+      if (category === 'service') {
+        const item = SERVICES.find(s => s.id === id);
+        if (item) item.price = priceNum;
+      } else {
+        const item = PACKAGES.find(p => p.id === id);
+        if (item) item.price = priceNum;
+      }
+    }
+
+    function adminDeleteItem(category, id) {
+      if (category === 'service') {
+        SERVICES = SERVICES.filter(s => s.id !== id);
+      } else {
+        PACKAGES = PACKAGES.filter(p => p.id !== id);
+      }
+      renderAdminCatalogList();
+    }
+
+    function adminAddNewItem() {
+      const type = document.getElementById('newItemType').value;
+      const name = document.getElementById('newItemName').value.trim();
+      const price = parseFloat(document.getElementById('newItemPrice').value);
+      const desc = document.getElementById('newItemDesc').value.trim() || 'Servicio especial The Black Lion';
+      const tag = document.getElementById('newItemTag').value.trim();
+
+      if (!name || isNaN(price)) {
+        showModal("Por favor escribe un nombre y un precio válido para el servicio o promoción.");
+        return;
+      }
+
+      const newId = 'custom_' + Date.now();
+      if (type === 'service') {
+        SERVICES.push({
+          id: newId,
+          name: name,
+          price: price,
+          icon: 'fa-star',
+          desc: desc
+        });
+      } else {
+        PACKAGES.push({
+          id: newId,
+          name: name,
+          price: price,
+          desc: desc,
+          tag: tag || 'Promo'
+        });
+      }
+
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemPrice').value = '';
+      document.getElementById('newItemDesc').value = '';
+      document.getElementById('newItemTag').value = '';
+
+      renderAdminCatalogList();
+    }
+
+    function renderAdminSlotsList() {
+      const label = document.getElementById('adminCurrentDayLabel');
+      const container = document.getElementById('adminSlotsList');
+      if (!selectedDate) return;
+
+      label.innerText = selectedDate.label;
+      container.innerHTML = '';
+      const bookedSlots = cloudBookings[selectedDate.raw] || [];
+
+      if (bookedSlots.length === 0) {
+        container.innerHTML = '<span class="text-[11px] text-zinc-500">Todos los horarios están libres este día.</span>';
+        return;
+      }
+
+      bookedSlots.forEach(slot => {
+        const btn = document.createElement('button');
+        btn.onclick = () => adminFreeSlot(selectedDate.raw, slot);
+        btn.className = "bg-rose-500/15 border border-rose-500/40 text-rose-300 hover:bg-emerald-500/20 hover:border-emerald-500 hover:text-emerald-300 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all";
+        btn.innerHTML = `<span>${slot}</span> <i class="fa-solid fa-unlock text-[9px]"></i>`;
+        container.appendChild(btn);
+      });
+    }
+
+    function adminFreeSlot(dateRaw, timeSlot) {
+      removeBookingFromMemory(dateRaw, timeSlot);
+      if (socket && socket.connected) {
+        socket.emit('cancelBooking', { dateRaw, timeSlot });
+      }
+      renderAdminSlotsList();
+      renderTimeSlots();
+    }
+
+    function saveAndBroadcastCatalog() {
+      saveCatalogLocal();
+      renderServices();
+      renderPackages();
+
+      if (socket && socket.connected) {
+        socket.emit('updateCatalog', {
+          services: SERVICES,
+          packages: PACKAGES
+        });
+      }
+
+      closeAdminDashboard();
+      showModal("✅ ¡Cambios guardados! Los precios y promociones se han actualizado para todos los clientes.");
     }
   </script>
 </body>
