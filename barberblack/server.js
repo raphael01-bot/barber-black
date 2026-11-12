@@ -13,7 +13,7 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'bookings.json');
 
-// Cargar citas guardadas del disco
+// Cargar citas previas
 let bookings = {};
 if (fs.existsSync(DATA_FILE)) {
   try {
@@ -23,15 +23,15 @@ if (fs.existsSync(DATA_FILE)) {
   }
 }
 
-// Servir los archivos estáticos de tu HTML
+// Servir la página web HTML
 app.use(express.static(__dirname));
 
-// Sincronización Realtime vía WebSockets
+// Manejo de conexiones en tiempo real
 io.on('connection', (socket) => {
-  // Enviar las citas acumuladas al nuevo cliente que entra
+  // Enviar citas existentes al cliente que se conecta
   socket.emit('initBookings', bookings);
 
-  // Escuchar cuando un cliente agenda
+  // 1. Escuchar nueva reservación
   socket.on('newBooking', (data) => {
     const { dateRaw, timeSlot } = data;
     if (dateRaw && timeSlot) {
@@ -40,15 +40,26 @@ io.on('connection', (socket) => {
       }
       if (!bookings[dateRaw].includes(timeSlot)) {
         bookings[dateRaw].push(timeSlot);
-        // Persistir en archivo JSON
         fs.writeFileSync(DATA_FILE, JSON.stringify(bookings, null, 2));
       }
-      // Notificar a TODOS los demás clientes conectados
+      // Transmitir cambio a todos los celulares conectados
       io.emit('bookingUpdated', { dateRaw, timeSlot });
+    }
+  });
+
+  // 2. Escuchar cuando un cliente CANCELA su cita
+  socket.on('cancelBooking', (data) => {
+    const { dateRaw, timeSlot } = data;
+    if (dateRaw && timeSlot && bookings[dateRaw]) {
+      bookings[dateRaw] = bookings[dateRaw].filter(slot => slot !== timeSlot);
+      fs.writeFileSync(DATA_FILE, JSON.stringify(bookings, null, 2));
+      
+      // Notificar a todos los dispositivos que el horario está disponible otra vez
+      io.emit('bookingCancelled', { dateRaw, timeSlot });
     }
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`Servidor de The Black Lion Barber Shop activo en el puerto ${PORT}`);
+  console.log(`Servidor activo en el puerto ${PORT}`);
 });

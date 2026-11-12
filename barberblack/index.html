@@ -81,6 +81,30 @@
   <!-- CONTENIDO PRINCIPAL -->
   <main class="max-w-md mx-auto px-4 pt-4 space-y-6">
 
+    <!-- TARJETA DE CITA ACTIVA DEL CLIENTE (APARECE SI YA RESERVÓ) -->
+    <section id="myActiveAppointmentCard" class="hidden bg-zinc-900 border-2 border-amber-400/70 rounded-3xl p-4 shadow-2xl space-y-3 relative overflow-hidden">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-2.5">
+        <span class="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-ticket text-amber-400"></i>
+          Tu Cita Agendada
+        </span>
+        <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+          Confirmada
+        </span>
+      </div>
+
+      <div class="text-xs space-y-1 text-zinc-300">
+        <p><strong class="text-white">Cliente:</strong> <span id="activeClientName"></span></p>
+        <p><strong class="text-white">Fecha y Hora:</strong> <span id="activeDateTime" class="text-amber-300 font-bold"></span></p>
+        <p><strong class="text-white">Servicios:</strong> <span id="activeServicesList"></span></p>
+      </div>
+
+      <button onclick="openCancelModal()" class="w-full mt-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/50 text-rose-400 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95">
+        <i class="fa-solid fa-calendar-xmark"></i>
+        <span>Cancelar mi Cita</span>
+      </button>
+    </section>
+
     <!-- LEYENDA INDICATIVA DESTACADA -->
     <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl p-3.5 text-center shadow-xl bg-gradient-to-r from-zinc-900 via-amber-950/20 to-zinc-900">
       <p class="text-xs font-bold text-amber-300 flex items-center justify-center gap-2">
@@ -132,7 +156,7 @@
         </div>
         <div id="syncBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span id="syncText">Conectado a Render</span>
+          <span id="syncText">Sincronizado</span>
         </div>
       </div>
 
@@ -185,7 +209,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE NOTIFICACIONES -->
+  <!-- MODAL DE NOTIFICACIONES GENERALES -->
   <div id="customModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
       <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 rounded-full flex items-center justify-center mx-auto text-amber-400 text-xl">
@@ -196,6 +220,27 @@
       <button onclick="closeModal()" class="w-full gold-gradient-bg text-zinc-950 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider">
         Entendido
       </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN DE CANCELACIÓN -->
+  <div id="cancelConfirmModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-rose-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
+      <div class="w-12 h-12 bg-rose-500/20 border border-rose-500/40 rounded-full flex items-center justify-center mx-auto text-rose-400 text-xl">
+        <i class="fa-solid fa-calendar-xmark"></i>
+      </div>
+      <h3 class="font-cinzel text-lg font-bold text-rose-400">¿Cancelar tu Cita?</h3>
+      <p class="text-xs text-zinc-300 leading-relaxed">
+        El horario volverá a estar disponible para otros clientes y se abrirá WhatsApp para notificar a la barbería.
+      </p>
+      <div class="flex gap-2">
+        <button onclick="closeCancelModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-2.5 rounded-xl text-xs">
+          Volver
+        </button>
+        <button onclick="executeCancelAppointment()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs">
+          Sí, Cancelar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -238,8 +283,10 @@
     // ALMACENAMIENTO GLOBAL DE CITAS RESERVADAS { "2026-11-11": ["12:00 PM", "02:00 PM"] }
     let cloudBookings = {};
 
+    // CITA ACTUAL DEL USUARIO EN ESTE NAVEGADOR
+    let myActiveBooking = null;
+
     // CONFIGURACIÓN DE CONEXIÓN CON SERVIDOR RENDER
-    // Cuando lo subas a Render, cambia RENDER_SERVER_URL por tu URL (ejemplo: https://mi-barberia.onrender.com)
     const RENDER_SERVER_URL = window.location.origin.includes('localhost') || window.location.origin.includes('file')
       ? 'http://localhost:3000' 
       : window.location.origin;
@@ -252,6 +299,7 @@
       renderServices();
       renderPackages();
       renderDays();
+      loadMyActiveBooking();
       
       initRenderSocket();
       renderTimeSlots();
@@ -288,12 +336,19 @@
             addBookingToMemory(data.dateRaw, data.timeSlot);
             renderTimeSlots();
 
-            // Si el usuario actual tenía seleccionada esa hora que alguien más acaba de ganar
             if (selectedDate && selectedDate.raw === data.dateRaw && selectedTimeSlot === data.timeSlot) {
               selectedTimeSlot = null;
               showModal(`⚠️ El horario de las ${data.timeSlot} acaba de ser reservado por otro cliente. Por favor elige otro disponible.`);
               updateSummaryUI();
             }
+          }
+        });
+
+        // 3. Escuchar cuando un cliente CANCELA y libera un horario
+        socket.on('bookingCancelled', (data) => {
+          if (data && data.dateRaw && data.timeSlot) {
+            removeBookingFromMemory(data.dateRaw, data.timeSlot);
+            renderTimeSlots();
           }
         });
 
@@ -306,12 +361,11 @@
           }
         });
       } catch (e) {
-        console.warn("Socket.IO backend no detectado localmente, utilizando almacenamiento distribuido.");
+        console.warn("Socket.IO backend no detectado localmente.");
         fetchFallbackBookings();
       }
     }
 
-    // Respaldos secundarios por si Render está en mantenimiento o en pruebas locales
     async function fetchFallbackBookings() {
       daysList.forEach(d => {
         try {
@@ -332,6 +386,84 @@
       try {
         localStorage.setItem(`barber_bookings_${dateRaw}`, JSON.stringify(cloudBookings[dateRaw]));
       } catch(e) {}
+    }
+
+    function removeBookingFromMemory(dateRaw, timeSlot) {
+      if (cloudBookings[dateRaw]) {
+        cloudBookings[dateRaw] = cloudBookings[dateRaw].filter(slot => slot !== timeSlot);
+        try {
+          localStorage.setItem(`barber_bookings_${dateRaw}`, JSON.stringify(cloudBookings[dateRaw]));
+        } catch(e) {}
+      }
+    }
+
+    // GESTIÓN DE LA CITA DEL PROPIO CLIENTE (PARA MOSTRAR BOTÓN CANCELAR)
+    function loadMyActiveBooking() {
+      try {
+        const saved = localStorage.getItem('black_lion_my_appointment');
+        if (saved) {
+          myActiveBooking = JSON.parse(saved);
+          renderMyActiveAppointmentUI();
+        }
+      } catch(e) {}
+    }
+
+    function renderMyActiveAppointmentUI() {
+      const card = document.getElementById('myActiveAppointmentCard');
+      if (myActiveBooking) {
+        document.getElementById('activeClientName').innerText = myActiveBooking.clientName;
+        document.getElementById('activeDateTime').innerText = `${myActiveBooking.dateLabel} • ${myActiveBooking.timeSlot}`;
+        document.getElementById('activeServicesList').innerText = myActiveBooking.servicesNames;
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    }
+
+    function openCancelModal() {
+      document.getElementById('cancelConfirmModal').classList.remove('hidden');
+    }
+
+    function closeCancelModal() {
+      document.getElementById('cancelConfirmModal').classList.add('hidden');
+    }
+
+    function executeCancelAppointment() {
+      closeCancelModal();
+      if (!myActiveBooking) return;
+
+      const { dateRaw, dateLabel, timeSlot, clientName, clientPhone, servicesNames } = myActiveBooking;
+
+      // 1. Eliminar de la memoria local y habilitar nuevamente la hora
+      removeBookingFromMemory(dateRaw, timeSlot);
+
+      // 2. Avisar en tiempo real al servidor en Render para que todos los usuarios lo vean disponible
+      if (socket && socket.connected) {
+        socket.emit('cancelBooking', {
+          dateRaw: dateRaw,
+          timeSlot: timeSlot
+        });
+      }
+
+      // 3. Limpiar tarjeta de cita activa
+      myActiveBooking = null;
+      try {
+        localStorage.removeItem('black_lion_my_appointment');
+      } catch(e) {}
+      renderMyActiveAppointmentUI();
+      renderTimeSlots();
+
+      // 4. Preparar mensaje de WhatsApp notificando la cancelación
+      let msg = `❌ *CANCELACIÓN DE CITA - THE BLACK LION BARBER SHOP* ❌\n\n`;
+      msg += `👤 *Cliente:* ${clientName}\n`;
+      msg += `📞 *Teléfono:* ${clientPhone}\n`;
+      msg += `📅 *Día:* ${dateLabel}\n`;
+      msg += `⏰ *Hora liberada:* ${timeSlot}\n`;
+      msg += `✂️ *Servicios:* ${servicesNames}\n\n`;
+      msg += `Informo que he cancelado mi reservación y este horario ha quedado disponible nuevamente. ¡Gracias!`;
+
+      const waUrl = `https://wa.me/${BARBER_PHONE}?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank');
     }
 
     function showModal(msg) {
@@ -517,7 +649,7 @@
             updateSummaryUI();
           };
         } else if (isSel) {
-          selectedTimeSlot = null; // Si fue tomado mientras lo seleccionaba
+          selectedTimeSlot = null;
         }
 
         btn.className = `py-2.5 px-2 rounded-xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-0.5 ${
@@ -577,7 +709,6 @@
         return;
       }
 
-      // Validar si la cita fue tomada antes de hacer clic
       const currentBookings = cloudBookings[selectedDate.raw] || [];
       if (currentBookings.includes(selectedTimeSlot)) {
         showModal("¡Lo sentimos! Otro cliente acaba de reservar este horario. Por favor elige otra hora disponible.");
@@ -587,10 +718,25 @@
         return;
       }
 
-      // 1. Guardar localmente
+      // 1. Guardar en memoria local
       addBookingToMemory(selectedDate.raw, selectedTimeSlot);
 
-      // 2. Transmitir inmediatamente al Servidor Render (Socket.IO)
+      // 2. Guardar datos de la cita del cliente para que le aparezca la opción "Cancelar Cita"
+      const servicesNames = selectedServices.map(s => s.name).join(', ');
+      myActiveBooking = {
+        dateRaw: selectedDate.raw,
+        dateLabel: selectedDate.label,
+        timeSlot: selectedTimeSlot,
+        clientName: name,
+        clientPhone: phone,
+        servicesNames: servicesNames
+      };
+      try {
+        localStorage.setItem('black_lion_my_appointment', JSON.stringify(myActiveBooking));
+      } catch(e) {}
+      renderMyActiveAppointmentUI();
+
+      // 3. Transmitir inmediatamente al Servidor Render (Socket.IO)
       if (socket && socket.connected) {
         socket.emit('newBooking', {
           dateRaw: selectedDate.raw,
@@ -603,7 +749,7 @@
       const servicesText = selectedServices.map(s => `• ${s.name} ($${s.price})`).join('\n');
       const total = selectedServices.reduce((sum, item) => sum + item.price, 0);
 
-      // 3. Preparar mensaje de WhatsApp
+      // 4. Preparar mensaje de WhatsApp
       let msg = `🦁 *RESERVACIÓN DE CITA - THE BLACK LION BARBER SHOP* 🦁\n\n`;
       msg += `👤 *Cliente:* ${name}\n`;
       msg += `📞 *Teléfono:* ${phone}\n`;
@@ -617,7 +763,8 @@
       const waUrl = `https://wa.me/${BARBER_PHONE}?text=${encodeURIComponent(msg)}`;
       window.open(waUrl, '_blank');
 
-      // Actualizar vista local
+      // Limpiar selección actual y actualizar vista
+      selectedTimeSlot = null;
       renderTimeSlots();
       updateSummaryUI();
     }
